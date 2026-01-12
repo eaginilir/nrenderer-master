@@ -42,6 +42,9 @@ namespace EnvMapPathTracer
         VertexTransformer vertexTransformer{};
         vertexTransformer.exec(spScene);
 
+        // 构建 BVH
+        bvh.build(scene);
+
         const auto taskNums = 8;
         thread t[taskNums];
         for (int i = 0; i < taskNums; i++) {
@@ -61,22 +64,11 @@ namespace EnvMapPathTracer
     }
 
     HitRecord EnvMapPathTracerRenderer::closestHitObject(const Ray& r) {
-        HitRecord closestHit = nullopt;
-        float closest = FLOAT_INF;
-        for (auto& s : scene.sphereBuffer) {
-            auto hitRecord = Intersection::xSphere(r, s, 0.000001, closest);
-            if (hitRecord && hitRecord->t < closest) {
-                closest = hitRecord->t;
-                closestHit = hitRecord;
-            }
-        }
-        for (auto& t : scene.triangleBuffer) {
-            auto hitRecord = Intersection::xTriangle(r, t, 0.000001, closest);
-            if (hitRecord && hitRecord->t < closest) {
-                closest = hitRecord->t;
-                closestHit = hitRecord;
-            }
-        }
+        // 使用 BVH 加速求交
+        HitRecord closestHit = bvh.intersect(r, 0.000001f, FLOAT_INF);
+        float closest = closestHit ? closestHit->t : FLOAT_INF;
+
+        // Plane 不在 BVH 中，单独处理
         for (auto& p : scene.planeBuffer) {
             auto hitRecord = Intersection::xPlane(r, p, 0.000001, closest);
             if (hitRecord && hitRecord->t < closest) {

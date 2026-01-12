@@ -8,6 +8,7 @@
 #include "intersections/HitRecord.hpp"
 #include "shaders/ShaderCreator.hpp"
 #include "EnvironmentMap.hpp"
+#include "accelerator/BVH.hpp"
 
 #include <tuple>
 
@@ -32,6 +33,7 @@ namespace EnvMapPathTracer
 
         vector<SharedShader> shaderPrograms;
         EnvironmentMap envMap;
+        BVH bvh;
 
     public:
         EnvMapPathTracerRenderer(SharedScene spScene)
