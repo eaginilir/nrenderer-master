@@ -1,5 +1,6 @@
 #include "shaders/Lambertian.hpp"
 #include "samplers/SamplerInstance.hpp"
+#include "samplers/CosineWeighted.hpp"
 #include "Onb.hpp"
 
 namespace EnvMapPathTracer
@@ -14,11 +15,18 @@ namespace EnvMapPathTracer
 
     Scattered Lambertian::shade(const Ray& ray, const Vec3& hitPoint, const Vec3& normal) const {
         Vec3 origin = hitPoint;
-        Vec3 random = defaultSamplerInstance<HemiSphere>().sample3d();
+        // 使用 Cosine-weighted 采样
+        Vec3 random = defaultSamplerInstance<CosineWeighted>().sample3d();
         Onb onb{normal};
         Vec3 direction = glm::normalize(onb.local(random));
-        float pdf = 1 / (2 * PI);
+
+        // Cosine-weighted PDF = cos(theta) / PI
+        float cosTheta = glm::dot(direction, normal);
+        float pdf = cosTheta / PI;
+
+        // BRDF = albedo / PI
         auto attenuation = albedo / PI;
+
         return {
             Ray{origin, direction},
             attenuation,
